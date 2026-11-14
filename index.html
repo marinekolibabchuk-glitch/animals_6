@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Вгадай тваринку: Хто де живе та що їсть?</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Comic Sans MS', 'Nunito', 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    .game-container {
+      background: #ffffff;
+      border-radius: 32px;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.12);
+      border: 6px solid #ffd166;
+      max-width: 720px;
+      width: 100%;
+      padding: 24px 28px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .game-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ff6b6b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .score-badge {
+      background: linear-gradient(135deg, #ffd166, #ffb703);
+      color: #4a3500;
+      font-size: 1.25rem;
+      font-weight: 800;
+      padding: 10px 20px;
+      border-radius: 50px;
+      box-shadow: 0 4px 10px rgba(255, 183, 3, 0.35);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.3s ease;
+    }
+
+    .score-badge.bump {
+      transform: scale(1.18);
+    }
+
+    .question-box {
+      background: #f0f9ff;
+      border: 4px dashed #4cc9f0;
+      border-radius: 24px;
+      padding: 22px 18px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .question-text {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #1d3557;
+      line-height: 1.35;
+      margin-bottom: 12px;
+    }
+
+    .question-icon-wrap {
+      font-size: 3.8rem;
+      animation: pulseIcon 1.5s infinite ease-in-out;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    @keyframes pulseIcon {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15) rotate(5deg); }
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .animal-card {
+      border: none;
+      border-radius: 26px;
+      padding: 22px 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+
+    .animal-card:nth-child(1) {
+      background: #ffadad;
+      box-shadow: 0 8px 0 #e07a7a;
+      color: #5c1919;
+    }
+    .animal-card:nth-child(2) {
+      background: #ffd6a5;
+      box-shadow: 0 8px 0 #d9a05b;
+      color: #5e3807;
+    }
+    .animal-card:nth-child(3) {
+      background: #caffbf;
+      box-shadow: 0 8px 0 #84c975;
+      color: #1c4d12;
+    }
+    .animal-card:nth-child(4) {
+      background: #bdb2ff;
+      box-shadow: 0 8px 0 #8477d4;
+      color: #251b63;
+    }
+
+    .animal-card:hover:not(:disabled) {
+      transform: translateY(-4px) scale(1.02);
+    }
+
+    .animal-card:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .animal-emoji {
+      font-size: 4.5rem;
+      line-height: 1;
+      filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    .animal-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+
+    .animal-card.correct {
+      background: #52b788 !important;
+      box-shadow: 0 8px 0 #2d6a4f !important;
+      color: #ffffff !important;
+      animation: celebrateBounce 0.7s ease;
+    }
+
+    .animal-card.wrong {
+      animation: gentleShake 0.45s ease;
+      opacity: 0.75;
+    }
+
+    @keyframes celebrateBounce {
+      0%, 100% { transform: scale(1); }
+      30% { transform: scale(1.15) rotate(-4deg); }
+      60% { transform: scale(1.12) rotate(4deg); }
+    }
+
+    @keyframes gentleShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      50% { transform: translateX(10px); }
+      75% { transform: translateX(-6px); }
+    }
+
+    .feedback-banner {
+      margin-top: 20px;
+      min-height: 48px;
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #2b9348;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .feedback-banner.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .feedback-banner.try-again {
+      color: #e76f51;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      font-size: 1.8rem;
+      pointer-events: none;
+      animation: flyUp 1.2s ease-out forwards;
+      z-index: 20;
+    }
+
+    @keyframes flyUp {
+      0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(0.6) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--tx), var(--ty)) scale(1.3) rotate(360deg);
+      }
+    }
+
+    .start-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.98);
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      padding: 24px;
+      border-radius: 26px;
+    }
+
+    .start-overlay.hidden {
+      display: none;
+    }
+
+    .start-animals {
+      font-size: 4rem;
+      letter-spacing: 6px;
+    }
+
+    .start-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1d3557;
+    }
+
+    .start-btn, .restart-btn {
+      background: linear-gradient(135deg, #06d6a0, #1b9aaa);
+      color: #ffffff;
+      border: none;
+      border-radius: 50px;
+      padding: 16px 40px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 7px 0 #116975;
+      transition: transform 0.15s;
+    }
+
+    .start-btn:hover, .restart-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .start-btn:active, .restart-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #116975;
+    }
+
+    .victory-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      padding: 20px 10px;
+    }
+
+    .victory-screen.active {
+      display: flex;
+    }
+
+    .victory-emoji {
+      font-size: 5rem;
+      animation: celebrateBounce 1s infinite;
+    }
+
+    .victory-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #ff6b6b;
+    }
+
+    .victory-subtitle {
+      font-size: 1.35rem;
+      color: #1d3557;
+      font-weight: 700;
+    }
+
+    @media (max-width: 520px) {
+      .question-text {
+        font-size: 1.35rem;
+      }
+      .animal-emoji {
+        font-size: 3.6rem;
+      }
+      .animal-name {
+        font-size: 1.2rem;
+      }
+      .game-container {
+        padding: 18px 16px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container" id="gameContainer">
+    <!-- Стартовий екран -->
+    <div class="start-overlay" id="startOverlay">
+      <div class="start-animals">🐒 🐶 🐰 🐱</div>
+      <div class="start-title">Вгадай тваринку!</div>
+      <p style="font-size: 1.2rem; color: #457b9d; font-weight: 700;">
+        Гра для малюків: Хто де живе та що їсть?
+      </p>
+      <button class="start-btn" id="startBtn">▶️ Розпочати гру</button>
+    </div>
+
+    <!-- Верхня панель -->
+    <div class="top-bar">
+      <div class="game-title">🐾 Вгадай тваринку</div>
+      <div class="score-badge" id="scoreBadge">
+        ⭐ Виконано: <span id="scoreCount">0</span> / <span id="totalCount">8</span>
+      </div>
+    </div>
+
+    <!-- Ігровий екран -->
+    <div id="quizScreen">
+      <div class="question-box">
+        <div class="question-text" id="questionText">Хто любить їсти солодкий банан?</div>
+        <div class="question-icon-wrap" id="questionIcon">🍌</div>
+      </div>
+
+      <div class="cards-grid" id="cardsGrid"></div>
+
+      <div class="feedback-banner" id="feedbackBanner"></div>
+    </div>
+
+    <!-- Екран завершення гри -->
+    <div class="victory-screen" id="victoryScreen">
+      <div class="victory-emoji">🏆🎉🐾</div>
+      <div class="victory-title">Ура! Ти справжній розумничок!</div>
+      <div class="victory-subtitle" id="victorySummary">
+        Ти виконав усі 8 завдань!
+      </div>
+      <button class="restart-btn" id="restartBtn">🔄 Грати знову</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "Хто любить їсти солодкий банан?",
+        icon: "🍌",
+        correctId: "monkey",
+        options: [
+          { id: "monkey", name: "Мавпочка", emoji: "🐒" },
+          { id: "dog", name: "Собачка", emoji: "🐶" },
+          { id: "rabbit", name: "Зайчик", emoji: "🐰" },
+          { id: "cat", name: "Котик", emoji: "🐱" }
+        ]
+      },
+      {
+        question: "Хто живе у дерев'яній будці у дворі?",
+        icon: "🏠",
+        correctId: "dog",
+        options: [
+          { id: "cat", name: "Котик", emoji: "🐱" },
+          { id: "dog", name: "Собачка", emoji: "🐶" },
+          { id: "monkey", name: "Мавпочка", emoji: "🐒" },
+          { id: "rabbit", name: "Зайчик", emoji: "🐰" }
+        ]
+      },
+      {
+        question: "Хто хрумає соковиту морквинку?",
+        icon: "🥕",
+        correctId: "rabbit",
+        options: [
+          { id: "monkey", name: "Мавпочка", emoji: "🐒" },
+          { id: "cat", name: "Котик", emoji: "🐱" },
+          { id: "rabbit", name: "Зайчик", emoji: "🐰" },
+          { id: "dog", name: "Собачка", emoji: "🐶" }
+        ]
+      },
+      {
+        question: "Хто любить пити молочко і муркотіти?",
+        icon: "🥛",
+        correctId: "cat",
+        options: [
+          { id: "dog", name: "Собачка", emoji: "🐶" },
+          { id: "rabbit", name: "Зайчик", emoji: "🐰" },
+          { id: "monkey", name: "Мавпочка", emoji: "🐒" },
+          { id: "cat", name: "Котик", emoji: "🐱" }
+        ]
+      },
+      {
+        question: "Хто стрибає по ліанах у теплих джунглях?",
+        icon: "🌴",
+        correctId: "monkey",
+        options: [
+          { id: "rabbit", name: "Зайчик", emoji: "🐰" },
+          { id: "monkey", name: "Мавпочка", emoji: "🐒" },
+          { id: "dog", name: "Собачка", emoji: "🐶" },
+          { id: "cat", name: "Котик", emoji: "🐱" }
+        ]
+      },
+      {
+        question: "Хто ховається у нірці під кущиком у лісі?",
+        icon: "🌲",
+        correctId: "rabbit",
+        options: [
+          { id: "cat", name: "Котик", emoji: "🐱" },
+          { id: "monkey", name: "Мавпочка", emoji: "🐒" },
+          { id: "dog", name: "Собачка", emoji: "🐶" },
+          { id: "rabbit", name: "Зайчик", emoji: "🐰" }
+        ]
+      },
+      {
+        question: "Хто любить гризти смачну кісточку?",
+        icon: "🦴",
+        correctId: "dog",
+        options: [
+          { id: "dog", name: "Собачка", emoji: "🐶" },
+          { id: "cat", name: "Котик", emoji: "🐱" },
+          { id: "rabbit", name: "Зайчик", emoji: "🐰" },
+          { id: "monkey", name: "Мавпочка", emoji: "🐒" }
+        ]
+      },
+      {
+        question: "Хто спить на м'якій подушці вдома на дивані?",
+        icon: "🛋️",
+        correctId: "cat",
+        options: [
+          { id: "monkey", name: "Мавпочка", emoji: "🐒" },
+          { id: "dog", name: "Собачка", emoji: "🐶" },
+          { id: "cat", name: "Котик", emoji: "🐱" },
+          { id: "rabbit", name: "Зайчик", emoji: "🐰" }
+        ]
+      }
+    ];
+
+    const praises = [
+      "Молодець! Правильно!",
+      "Супер! Ти вгадав!",
+      "Розумничок! Так тримати!",
+      "Чудово! Блискуча відповідь!",
+      "Браво! Ти справжній знавець тваринок!"
+    ];
+
+    let currentIndex = 0;
+    let completedCount = 0;
+    let isTransitioning = false;
+
+    const questionTextEl = document.getElementById("questionText");
+    const questionIconEl = document.getElementById("questionIcon");
+    const cardsGridEl = document.getElementById("cardsGrid");
+    const feedbackBannerEl = document.getElementById("feedbackBanner");
+    const scoreCountEl = document.getElementById("scoreCount");
+    const totalCountEl = document.getElementById("totalCount");
+    const scoreBadgeEl = document.getElementById("scoreBadge");
+    const quizScreenEl = document.getElementById("quizScreen");
+    const victoryScreenEl = document.getElementById("victoryScreen");
+    const victorySummaryEl = document.getElementById("victorySummary");
+    const gameContainerEl = document.getElementById("gameContainer");
+    const startOverlayEl = document.getElementById("startOverlay");
+
+    totalCountEl.textContent = questions.length;
+
+    // Генерація приємних музичних звуків та арпеджіо замість штучного голосу
+    function playSound(type) {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+
+        if (type === "success") {
+          const notes = [523.25, 659.25, 783.99, 1046.5];
+          notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(freq, now + i * 0.08);
+            gain.gain.setValueAtTime(0.18, now + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.08);
+            osc.stop(now + i * 0.08 + 0.35);
+          });
+        } else if (type === "click") {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.09);
+        } else {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(260, now);
+          osc.frequency.linearRampToValueAtTime(180, now + 0.2);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        }
+      } catch (e) {}
+    }
+
+    function launchConfetti(targetEl) {
+      const rect = targetEl.getBoundingClientRect();
+      const containerRect = gameContainerEl.getBoundingClientRect();
+      const startX = rect.left - containerRect.left + rect.width / 2;
+      const startY = rect.top - containerRect.top + rect.height / 2;
+      const symbols = ["⭐", "🌟", "🎉", "✨", "💛", "🎈"];
+
+      for (let i = 0; i < 16; i++) {
+        const piece = document.createElement("span");
+        piece.className = "confetti-piece";
+        piece.textContent = symbols[i % symbols.length];
+        piece.style.left = `${startX}px`;
+        piece.style.top = `${startY}px`;
+
+        const angle = (Math.PI * 2 * i) / 16;
+        const distance = 90 + Math.random() * 110;
+        piece.style.setProperty("--tx", `${Math.cos(angle) * distance}px`);
+        piece.style.setProperty("--ty", `${Math.sin(angle) * distance - 40}px`);
+
+        gameContainerEl.appendChild(piece);
+        setTimeout(() => piece.remove(), 1200);
+      }
+    }
+
+    function renderQuestion() {
+      isTransitioning = false;
+      const current = questions[currentIndex];
+      questionTextEl.textContent = current.question;
+      questionIconEl.textContent = current.icon;
+      feedbackBannerEl.className = "feedback-banner";
+      feedbackBannerEl.textContent = "";
+
+      cardsGridEl.innerHTML = "";
+      current.options.forEach((animal) => {
+        const btn = document.createElement("button");
+        btn.className = "animal-card";
+        btn.innerHTML = `
+          <span class="animal-emoji">${animal.emoji}</span>
+          <span class="animal-name">${animal.name}</span>
+        `;
+        btn.addEventListener("click", () => handleAnswer(animal.id, btn));
+        cardsGridEl.appendChild(btn);
+      });
+    }
+
+    function handleAnswer(selectedId, cardBtn) {
+      if (isTransitioning) return;
+
+      const current = questions[currentIndex];
+
+      if (selectedId === current.correctId) {
+        isTransitioning = true;
+        cardBtn.classList.add("correct");
+
+        document.querySelectorAll(".animal-card").forEach((b) => (b.disabled = true));
+
+        completedCount++;
+        scoreCountEl.textContent = completedCount;
+        scoreBadgeEl.classList.add("bump");
+        setTimeout(() => scoreBadgeEl.classList.remove("bump"), 350);
+
+        const praiseText = praises[Math.floor(Math.random() * praises.length)];
+        feedbackBannerEl.textContent = `🌟 ${praiseText}`;
+        feedbackBannerEl.className = "feedback-banner show";
+
+        playSound("success");
+        launchConfetti(cardBtn);
+
+        setTimeout(() => {
+          currentIndex++;
+          if (currentIndex < questions.length) {
+            renderQuestion();
+          } else {
+            showVictory();
+          }
+        }, 2000);
+      } else {
+        cardBtn.classList.remove("wrong");
+        void cardBtn.offsetWidth;
+        cardBtn.classList.add("wrong");
+
+        playSound("wrong");
+        feedbackBannerEl.textContent = "🤔 Спробуй ще раз!";
+        feedbackBannerEl.className = "feedback-banner show try-again";
+      }
+    }
+
+    function showVictory() {
+      quizScreenEl.style.display = "none";
+      victoryScreenEl.classList.add("active");
+      victorySummaryEl.textContent = `Ти успішно виконав усі ${completedCount} завдань!`;
+      playSound("success");
+      launchConfetti(victoryScreenEl);
+    }
+
+    function restartGame() {
+      currentIndex = 0;
+      completedCount = 0;
+      scoreCountEl.textContent = "0";
+      victoryScreenEl.classList.remove("active");
+      quizScreenEl.style.display = "block";
+      renderQuestion();
+    }
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      playSound("click");
+      startOverlayEl.classList.add("hidden");
+      renderQuestion();
+    });
+
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      playSound("click");
+      restartGame();
+    });
+  </script>
+</body>
+</html>
